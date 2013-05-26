@@ -4,7 +4,7 @@
 <title>Learning WebGL &mdash; lesson 9</title>
 <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
 
-<script type="text/javascript" src="glMatrix-0.9.5.min.js"></script>
+<script type="text/javascript" src="gl-matrix-min.js"></script>
 <script type="text/javascript" src="webgl-utils.js"></script>
 
 <script id="shader-fs" type="x-shader/x-fragment">
@@ -44,7 +44,7 @@
 
     function initGL(canvas) {
         try {
-            gl = canvas.getContext("experimental-webgl");
+            gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
             gl.viewportWidth = canvas.width;
             gl.viewportHeight = canvas.height;
         } catch (e) {
@@ -151,7 +151,7 @@
 
     function mvPushMatrix() {
         var copy = mat4.create();
-        mat4.set(mvMatrix, copy);
+        mat4.copy(copy, mvMatrix);
         mvMatrixStack.push(copy);
     }
 
@@ -273,12 +273,12 @@
         mvPushMatrix();
 
         // Move to the star's position
-        mat4.rotate(mvMatrix, degToRad(this.angle), [0.0, 1.0, 0.0]);
-        mat4.translate(mvMatrix, [this.dist, 0.0, 0.0]);
+        mat4.rotate(mvMatrix, mvMatrix, degToRad(this.angle), [0.0, 1.0, 0.0]);
+        mat4.translate(mvMatrix, mvMatrix, [this.dist, 0.0, 0.0]);
 
         // Rotate back so that the star is facing the viewer
-        mat4.rotate(mvMatrix, degToRad(-this.angle), [0.0, 1.0, 0.0]);
-        mat4.rotate(mvMatrix, degToRad(-tilt), [1.0, 0.0, 0.0]);
+        mat4.rotate(mvMatrix, mvMatrix, degToRad(-this.angle), [0.0, 1.0, 0.0]);
+        mat4.rotate(mvMatrix, mvMatrix, degToRad(-tilt), [1.0, 0.0, 0.0]);
 
         if (twinkle) {
             // Draw a non-rotating star in the alternate "twinkling" color
@@ -287,7 +287,7 @@
         }
 
         // All stars spin around the Z axis at the same rate
-        mat4.rotate(mvMatrix, degToRad(spin), [0.0, 0.0, 1.0]);
+        mat4.rotate(mvMatrix, mvMatrix, degToRad(spin), [0.0, 0.0, 1.0]);
 
         // Draw the star in its main color
         gl.uniform3f(shaderProgram.colorUniform, this.r, this.g, this.b);
@@ -344,14 +344,14 @@
         gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
+        mat4.perspective(pMatrix, 45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0);
 
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
         gl.enable(gl.BLEND);
 
         mat4.identity(mvMatrix);
-        mat4.translate(mvMatrix, [0.0, 0.0, zoom]);
-        mat4.rotate(mvMatrix, degToRad(tilt), [1.0, 0.0, 0.0]);
+        mat4.translate(mvMatrix, mvMatrix, [0.0, 0.0, zoom]);
+        mat4.rotate(mvMatrix, mvMatrix, degToRad(tilt), [1.0, 0.0, 0.0]);
 
         var twinkle = document.getElementById("twinkle").checked;
         for (var i in stars) {
