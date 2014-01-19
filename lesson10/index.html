@@ -69,18 +69,18 @@
 
         var shader;
         if (shaderScript.type == "x-shader/x-fragment") {
-            shader = gl.createShader(gl.FRAGMENT_SHADER);
+            shader = { id: gl.createShader(gl.FRAGMENT_SHADER) };
         } else if (shaderScript.type == "x-shader/x-vertex") {
-            shader = gl.createShader(gl.VERTEX_SHADER);
+            shader = { id: gl.createShader(gl.VERTEX_SHADER) };
         } else {
             return null;
         }
 
-        gl.shaderSource(shader, str);
-        gl.compileShader(shader);
+        gl.shaderSource(shader.id, str);
+        gl.compileShader(shader.id);
 
-        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-            alert(gl.getShaderInfoLog(shader));
+        if (!gl.getShaderParameter(shader.id, gl.COMPILE_STATUS)) {
+            alert(gl.getShaderInfoLog(shader.id));
             return null;
         }
 
@@ -94,32 +94,32 @@
         var fragmentShader = getShader(gl, "shader-fs");
         var vertexShader = getShader(gl, "shader-vs");
 
-        shaderProgram = gl.createProgram();
-        gl.attachShader(shaderProgram, vertexShader);
-        gl.attachShader(shaderProgram, fragmentShader);
-        gl.linkProgram(shaderProgram);
+        shaderProgram = { id: gl.createProgram() };
+        gl.attachShader(shaderProgram.id, vertexShader.id);
+        gl.attachShader(shaderProgram.id, fragmentShader.id);
+        gl.linkProgram(shaderProgram.id);
 
-        if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+        if (!gl.getProgramParameter(shaderProgram.id, gl.LINK_STATUS)) {
             alert("Could not initialise shaders");
         }
 
-        gl.useProgram(shaderProgram);
+        gl.useProgram(shaderProgram.id);
 
-        shaderProgram.vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexPosition");
+        shaderProgram.vertexPositionAttribute = gl.getAttribLocation(shaderProgram.id, "aVertexPosition");
         gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
 
-        shaderProgram.textureCoordAttribute = gl.getAttribLocation(shaderProgram, "aTextureCoord");
+        shaderProgram.textureCoordAttribute = gl.getAttribLocation(shaderProgram.id, "aTextureCoord");
         gl.enableVertexAttribArray(shaderProgram.textureCoordAttribute);
 
-        shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
-        shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
-        shaderProgram.samplerUniform = gl.getUniformLocation(shaderProgram, "uSampler");
+        shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram.id, "uPMatrix");
+        shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram.id, "uMVMatrix");
+        shaderProgram.samplerUniform = gl.getUniformLocation(shaderProgram.id, "uSampler");
     }
 
 
     function handleLoadedTexture(texture) {
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.bindTexture(gl.TEXTURE_2D, texture.id);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.image);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
@@ -131,7 +131,7 @@
     var mudTexture;
 
     function initTexture() {
-        mudTexture = gl.createTexture();
+        mudTexture = { id: gl.createTexture() };
         mudTexture.image = new Image();
         mudTexture.image.onload = function () {
             handleLoadedTexture(mudTexture)
@@ -253,14 +253,14 @@
             }
         }
 
-        worldVertexPositionBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, worldVertexPositionBuffer);
+        worldVertexPositionBuffer = { id: gl.createBuffer() };
+        gl.bindBuffer(gl.ARRAY_BUFFER, worldVertexPositionBuffer.id);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexPositions), gl.STATIC_DRAW);
         worldVertexPositionBuffer.itemSize = 3;
         worldVertexPositionBuffer.numItems = vertexCount;
 
-        worldVertexTextureCoordBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, worldVertexTextureCoordBuffer);
+        worldVertexTextureCoordBuffer = { id: gl.createBuffer() };
+        gl.bindBuffer(gl.ARRAY_BUFFER, worldVertexTextureCoordBuffer.id);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexTextureCoords), gl.STATIC_DRAW);
         worldVertexTextureCoordBuffer.itemSize = 2;
         worldVertexTextureCoordBuffer.numItems = vertexCount;
@@ -299,13 +299,13 @@
         mat4.translate(mvMatrix, mvMatrix, [-xPos, -yPos, -zPos]);
 
         gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, mudTexture);
+        gl.bindTexture(gl.TEXTURE_2D, mudTexture.id);
         gl.uniform1i(shaderProgram.samplerUniform, 0);
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, worldVertexTextureCoordBuffer);
+        gl.bindBuffer(gl.ARRAY_BUFFER, worldVertexTextureCoordBuffer.id);
         gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, worldVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, worldVertexPositionBuffer);
+        gl.bindBuffer(gl.ARRAY_BUFFER, worldVertexPositionBuffer.id);
         gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, worldVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
         setMatrixUniforms();
