@@ -56,8 +56,6 @@
   function initGL(canvas) {
     try {
       gl = canvas.getContext("experimental-webgl");
-      gl.viewportWidth = canvas.width;
-      gl.viewportHeight = canvas.height;
     } catch(e) {
     }
     if (!gl) {
@@ -204,7 +202,7 @@
   var centerPos;
   var color;
   function drawScene() {
-    gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 

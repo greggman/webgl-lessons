@@ -134,8 +134,6 @@
     function initGL(canvas) {
         try {
             gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
-            gl.viewportWidth = canvas.width;
-            gl.viewportHeight = canvas.height;
         } catch (e) {
         }
         if (!gl) {
@@ -526,10 +524,10 @@
     var cubeAngle = 0;
 
     function drawScene() {
-        gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        mat4.perspective(pMatrix, 45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0);
+        mat4.perspective(pMatrix, 45, gl.canvas.clientWidth / gl.canvas.clientHeight, 0.1, 100.0);
 
         var perFragmentLighting = document.getElementById("per-fragment").checked;
         if (perFragmentLighting) {
