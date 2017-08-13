@@ -1,10 +1,11 @@
-var canvas;
 var gl;
 var squareVerticesBuffer;
-var mvMatrix;
 var shaderProgram;
+var mvMatrix;
 var vertexPositionAttribute;
 var perspectiveMatrix;
+
+start();
 
 //
 // start
@@ -13,9 +14,7 @@ var perspectiveMatrix;
 // Figuratively, that is. There's nothing moving in this demo.
 //
 function start() {
-  canvas = document.getElementById("glcanvas");
-
-  initWebGL(canvas);      // Initialize the GL context
+  initWebGL(document.querySelector("#glcanvas"));      // Initialize the GL context
 
   // Only continue if WebGL is available and working
 
@@ -35,9 +34,8 @@ function start() {
 
     initBuffers();
 
-    // Set up to draw the scene periodically.
-
-    setInterval(drawScene, 15);
+    // Set up to draw the to be drawn
+    requestAnimationFrame(drawScene);
   }
 }
 
@@ -47,14 +45,8 @@ function start() {
 // Initialize WebGL, returning the GL context or null if
 // WebGL isn't available or could not be initialized.
 //
-function initWebGL() {
-  gl = null;
-
-  try {
-    gl = canvas.getContext("experimental-webgl");
-  }
-  catch(e) {
-  }
+function initWebGL(canvas) {
+  gl = canvas.getContext("webgl");
 
   // If we don't have a GL context, give up now
 
@@ -112,24 +104,30 @@ function drawScene() {
   // ratio of 640:480, and we only want to see objects between 0.1 units
   // and 100 units away from the camera.
 
-  perspectiveMatrix = makePerspective(45, 640.0/480.0, 0.1, 100.0);
+  perspectiveMatrix = mat4.create();
+  mat4.perspective(perspectiveMatrix, 45 * Math.PI / 180, 640.0 / 480.0, 0.1, 100.0);
 
   // Set the drawing position to the "identity" point, which is
   // the center of the scene.
-
-  loadIdentity();
+  mvMatrix = mat4.create();
 
   // Now move the drawing position a bit to where we want to start
   // drawing the square.
 
-  mvTranslate([-0.0, 0.0, -6.0]);
+  mat4.translate(mvMatrix, mvMatrix, [-0.0, 0.0, -6.0]);
 
   // Draw the square by binding the array buffer to the square's vertices
   // array, setting attributes, and pushing it to GL.
 
   gl.bindBuffer(gl.ARRAY_BUFFER, squareVerticesBuffer);
   gl.vertexAttribPointer(vertexPositionAttribute, 3, gl.FLOAT, false, 0, 0);
-  setMatrixUniforms();
+
+  var pUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
+  gl.uniformMatrix4fv(pUniform, false, perspectiveMatrix);
+
+  var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+  gl.uniformMatrix4fv(mvUniform, false, mvMatrix);
+
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 }
 
@@ -173,21 +171,8 @@ function getShader(gl, id) {
   // Didn't find an element with the specified ID; abort.
 
   if (!shaderScript) {
+    alert("could not find script:" + id);
     return null;
-  }
-
-  // Walk through the source element's children, building the
-  // shader source string.
-
-  var theSource = "";
-  var currentChild = shaderScript.firstChild;
-
-  while(currentChild) {
-    if (currentChild.nodeType == 3) {
-      theSource += currentChild.textContent;
-    }
-
-    currentChild = currentChild.nextSibling;
   }
 
   // Now figure out what type of shader script we have,
@@ -195,15 +180,17 @@ function getShader(gl, id) {
 
   var shader;
 
-  if (shaderScript.type == "x-shader/x-fragment") {
+  if (shaderScript.type === "x-shader/x-fragment") {
     shader = gl.createShader(gl.FRAGMENT_SHADER);
-  } else if (shaderScript.type == "x-shader/x-vertex") {
+  } else if (shaderScript.type === "x-shader/x-vertex") {
     shader = gl.createShader(gl.VERTEX_SHADER);
   } else {
+    alert("unknonw shader type for:" + id);
     return null;  // Unknown shader type
   }
 
   // Send the source to the shader object
+  var theSource = shaderScript.text;
 
   gl.shaderSource(shader, theSource);
 
@@ -221,26 +208,3 @@ function getShader(gl, id) {
   return shader;
 }
 
-//
-// Matrix utility functions
-//
-
-function loadIdentity() {
-  mvMatrix = Matrix.I(4);
-}
-
-function multMatrix(m) {
-  mvMatrix = mvMatrix.x(m);
-}
-
-function mvTranslate(v) {
-  multMatrix(Matrix.Translation($V([v[0], v[1], v[2]])).ensure4x4());
-}
-
-function setMatrixUniforms() {
-  var pUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
-  gl.uniformMatrix4fv(pUniform, false, new Float32Array(perspectiveMatrix.flatten()));
-
-  var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
-  gl.uniformMatrix4fv(mvUniform, false, new Float32Array(mvMatrix.flatten()));
-}
